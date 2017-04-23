@@ -1,0 +1,50 @@
+@import url(https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css);
+
+.axis line, .axis path {
+  fill: none;
+  stroke: #000;
+}
+
+.title {
+	text-anchor:middle;
+}
+
+.node {
+  border: solid 1px white;
+  font: 10px sans-serif;
+  line-height: 12px;
+  overflow: hidden;
+  position: absolute;
+  text-indent: 2px;
+  color:white;
+}
+
+#vis {
+  position:relative;
+  padding-bottom:100px;
+}
+
+.btn-group {
+  margin-bottom:20px;
+}
+
+/*from mbostock*/
+
+.node circle {
+  fill: #999;
+}
+.node text {
+  font: 10px sans-serif;
+}
+.node--internal circle {
+  fill: #555;
+}
+.node--internal text {
+  text-shadow: 0 1px 0 #fff, 0 -1px 0 #fff, 1px 0 0 #fff, -1px 0 0 #fff;
+}
+.link {
+  fill: none;
+  stroke: #555;
+  stroke-opacity: 0.4;
+  stroke-width: 1.5px;
+
