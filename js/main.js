@@ -1,418 +1,147 @@
-// Wait for DOM to finish loading
+/* Create a circle-pack layout of country level measures.
+Inspiration drawn from: https://bl.ocks.org/mbostock/4063582
+https://bl.ocks.org/mbostock/7607535
+https://bl.ocks.org/mbostock/4063530
+ */
 $(function () {
-    // Load in csv file (in data directory) using Plotly's csv function (refer to USA Bubble Map example)
-    d3.queue()
-        .defer(d3.csv, 'data/parks.csv')
-        .defer(d3.csv, 'data/species.csv')
-        .await(theData);
+    // Read in your data. On success, run the rest of your code
+    d3.csv('data/2016.csv', function (error, data) {
 
-    function theData(error, parks, species) {
-        if (error) {
-            console.error('There is an error' + error);
-        }
-        else {
-            // Margin: how much space to put in the SVG for axes/titles
-            var margin = {
-                left: 70,
-                bottom: 220,
-                top: 50,
-                right: 50
-            };
+        // Setting defaults
+        var margin = {
+            top: 40,
+            right: 10,
+            bottom: 10,
+            left: 10
+        },
+            width = 960,
+            height = 500,
+            diameter = 900,
+            drawWidth = width - margin.left - margin.right,
+            drawHeight = height - margin.top - margin.bottom,
+            measure = 'Happiness_Rank'; // variable to visualize
 
-            // Height and width of the total area
-            var height = 600;
-            var width = 1000;
+        // Append an svg element and a g element (to the svg) to main div, vis (to render circle elements).
+        // Make sure to set the width and height of your svg as the diameter variable
+        var svg = d3.select("#vis")
+            .append('svg')
+            .attr('height', diameter)
+            .attr('width', diameter)
+            .style("left", margin.left + "px")
+            .style("top", margin.top + "px");
+        g = svg.append("g")
 
-            // Height/width of the drawing area for data symbols
-            var drawHeight = height - margin.bottom - margin.top;
-            var drawWidth = width - margin.left - margin.right;
+        /* ********************************** Create hierarchical data structure & treemap function  ********************************** */
 
-            /************************************** Create chart wrappers ***************************************/
-            // Select SVG to work with, setting width and height (the vis <div> is defined in the index.html file)
-            var svg = d3.select('#vis')
-                .append('svg')
-                .attr('height', height)
-                .attr('width', width);
+        // Nest your data *by region* using d3.nest()
+        var nestedData = d3.nest()
+            .key(function (d) {
+                return d.Region; //Country
+            })
+            .entries(data);
 
-            // Append a 'g' element in which to place the rects, shifted down and right from the top left corner
-            var g = svg.append('g')
-                .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
-                .attr('height', drawHeight)
-                .attr('width', drawWidth);
-
-
-            /************************************** Data prep ***************************************/
-
-            // You'll need to *aggregate* the data such that, for each device-app combo, you have the *count* of the number of occurances
-            // Lots of ways to do it, but here's a slick d3 approach: 
-            // http://www.d3noob.org/2014/02/grouping-and-summing-data-using-d3nest.html
-
-            var parksData = d3.nest()
-                .key(function (d) {
-                    //console.log(d.Park_Name)
-                    return d.Park_Name;
-                })
-                .rollup(function (v) { return v.length; })
-                .entries(species);
-            //console.log(JSON.stringify(parksData));
-
-            /************************************** Defining scales and axes ***************************************/
-
-            // Append an xaxis label to your SVG, specifying the 'transform' attribute to position it (don't call the axis function yet)
-            var xAxisLabel = svg.append('g')
-                .attr('transform', 'translate(' + margin.left + ',' + (drawHeight + margin.top) + ')')
-                .attr('class', 'axis');
-
-            // Append a yaxis label to your SVG, specifying the 'transform' attribute to position it (don't call the axis function yet)
-            var yAxisLabel = svg.append('g')
-                .attr('class', 'axis')
-                .attr('transform', 'translate(' + margin.left + ',' + (margin.top) + ')');
-
-            // Append text to label the y axis (don't specify the text yet)
-            var xAxisText = svg.append('text')
-                .attr('transform', 'translate(' + (margin.left + drawWidth / 2) + ',' + (drawHeight + margin.top + 220) + ')')
-                .attr('class', 'title');
-
-            // Append text to label the y axis (don't specify the text yet)
-            var yAxisText = svg.append('text')
-                .attr('transform', 'translate(' + (margin.left - 40) + ',' + (margin.top + drawHeight / 2) + ') rotate(-90)')
-                .attr('class', 'title');
-
-            // Define xAxis using d3.axisBottom(). Scale will be set in the setAxes function.
-            var xAxis = d3.axisBottom();
-
-            // Define yAxis using d3.axisLeft(). Scale will be set in the setAxes function.
-            var yAxis = d3.axisLeft()
-                .tickFormat(d3.format('.2s'));
-
-            // Define an xScale with d3.scaleBand. Domain/rage will be set in the setScales function.
-            var xScale = d3.scaleBand();
-
-            // Define a yScale with d3.scaleLinear. Domain/rage will be set in the setScales function.
-            var yScale = d3.scaleLinear();
-
-
-            // Write a function for setting scales.
-            // var setScales = function (data) {
-            //     // Get the unique values of states for the domain of your x scale
-            //     var parks = data.map(function (d) {
-            //         console.log(JSON.stringify(d.Park_Name))
-            //         return d.Park_Name;
-            //     });
-
-            var setScales = function () {
-                // Get the unique values of states for the domain of your x scale
-                // var parks = data.map(function (d) {
-                //     console.log(JSON.stringify(d.Park_Name))
-                //     return d.Park_Name;
-                // });
-
-                // Set the domain/range of your xScale
-                xScale.range([0, drawWidth])
-                    .padding(0.1)
-                    // .domain(parks);
-                    //.domain(parks)
-                    .domain(parksData.map(function (d) { return d.key; }));
-
-                // Get min/max values of the percent data (for your yScale domain)
-                var yMin = d3.min(parksData, function (d) {
-                    return +d.value;
-                });
-
-                var yMax = d3.max(parksData, function (d) {
-                    return +d.value;
-                });
-
-                // Set the domain/range of your yScale
-                yScale.range([drawHeight, 0])
-                    // .domain([0, yMax]);
-                    //.range([drawHeight, 0])
-                    .domain([0, yMax]);
-            };
-
-            // Function for setting axes
-            var setAxes = function () {
-                // Set the scale of your xAxis object
-                xAxis.scale(xScale);
-
-                // Set the scale of your yAxis object
-                yAxis.scale(yScale);
-
-                // Render (call) your xAxis in your xAxisLabel
-                xAxisLabel.transition().duration(1500).call(xAxis)
-                    .selectAll("text")
-                    .attr("y", 5)
-                    .attr("x", 9)
-                    .attr("dy", ".35em")
-                    .attr("transform", "rotate(65)")
-                    .style("text-anchor", "start");
-
-                // Render (call) your yAxis in your yAxisLabel
-                yAxisLabel.transition().duration(1500).call(yAxis);
-
-                // Update xAxisText and yAxisText labels
-                xAxisText.text('National Park');
-                yAxisText.text('Number of species');
-            }
-
-            // Add tip
-            var tip = d3.tip().attr('class', 'd3-tip').html(function (d) {
-                //console.log(d.key)
-                return d.value;
+        // Define a hierarchy for your data
+        var root = d3.hierarchy({
+            values: nestedData
+        }, function (d) {
+            return d.values;
+        })
+            .sort(function (a, b) { // sort root data
+                return b.value - a.value;
             });
-            g.call(tip);
 
-            // function handleMouseOver(d,i) {
-            //     tip.show;
+        // Create a pack layout function returned by the d3.pack() function.
+        // This will compute a pack layout instead of a treemap layout.
+        // Make sure to use the .size method of pack object to set the size (width and height)
+        // Both should be set to your diameter variable, passed into the .size method as a two-element array.
+        var pack = d3.pack()
+            .size([diameter, diameter])
+            .padding(2);
 
-            //     d3.select(this).attr({
-            //         fill: "orange"
-            //     });
-            // }
+        /* ********************************** Create an ordinal color scale  ********************************** */
 
+        // Get list of regions for colors
+        var regions = nestedData.map(function (d) {
+            return d.key;
+        });
+        var happinessScore = nestedData.map(function (d) {
+            return d.values.Happiness_Score;
+        });
 
-            var draw = function (data) {
-                // Set scales
-                //setScales(data);
-                setScales();
+        // Set an ordinal scale for colors
+        var colorScale = d3.scaleOrdinal().domain(regions).range(d3.schemeCategory10);
 
-                // Set axes
-                setAxes();
+        var nodeColorScale = d3.scaleOrdinal().domain(happinessScore).range(d3.schemeCategory10);
 
-                // Select all rects and bind data
-                var bars = g.selectAll('rect').data(data);
+        var tip = d3.tip().attr('class', 'd3-tip').html(function (d) {
+            //console.log(d.key)
+            return d.key;
+        });
+        g.call(tip);
 
-                // Use the .enter() method to get your entering elements, and assign initial positions
-                bars.enter().append('rect')
-                    .attr('x', function (d) {
-                        return xScale(d.key);
-                    })
-                    .attr('y', function (d) {
-                        return drawHeight;
-                    })
-                    .attr('height', 0)
-                    .attr('class', 'bar')
-                    .attr('fill', 'green')
-                    .on('mouseover', tip.show)
-                    // .on('mouseover', handleMouseOver)
-                    .on('mouseout', tip.hide)
-                    .attr('width', xScale.bandwidth())
-                    .merge(bars)
-                    .transition()
-                    .duration(500)
-                    .delay(function (d, i) {
-                        return i * 50;
-                    })
-                    .attr('y', function (d) {
-                        return yScale(d.value);
-                    })
-                    .attr('height', function (d) {
-                        return drawHeight - yScale(d.value);
-                    });
+        /* ********************************** Write a function to perform the data-join  ********************************** */
 
-                // Use the .exit() and .remove() methods to remove elements that are no longer in the data
-                bars.exit().remove();
-            };
+        // Write your `draw` function to bind data, and position elements
+        var draw = function () {
+            // Redefine which value you want to visualize in your data by using the `.sum()` method
+            root
+                .sum(function (d) {
+                    return +d[measure];
+                })
 
-            // Assign a change event to input elements to set the sex/type values, then filter and update the data
-            // $("input").on('change', function () {
-            //     // Get value, determine if it is the sex or type controller
-            //     var val = $(this).val();
-            //     var isSex = $(this).hasClass('sex');
-            //     if (isSex) sex = val;
-            //     else type = val;
+            // (Re)build your treemap data structure by passing your `root` to `pack` function
+            pack(root);
 
-            //     // Filter data, update chart
-            //     var currentData = filterData();
-            //     draw(currentData);
-            // });
+            // Bind data to a selection of elements with class node
+            // The data that you want to join is array of elements returned by `root.leaves()`
+            var nodes = g.selectAll("circle").data(root.leaves());
 
-            // // Filter data to the current settings then draw
-            // var currentData = filterData();
-            // draw(currentData);
+            //console.log(JSON.stringify(nestedData.values));
 
-            draw(parksData);
+            // Rather than append div elements, append circle elements to g. 
+            // Position the circles, using the x, y, and r variables computed by the pack layout.
+            nodes.enter().append("circle")
+                .attr("class", "node")
 
-        }
+                .merge(nodes)
+                .on('mouseover', tip.show)
+                .on('mouseout', tip.hide)
+                // .attr("class", "node")
+                .transition().duration(1500)
+                .attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; })
+                .attr("r", function (d) { return d.r; })
+                .style("fill", function (d) { return nodeColorScale(d.data.Happiness_Score); }) // Country
 
-        // // Parse your loaded data for your graph:
-        // var processFiles = function () {
+            var text = g.selectAll("text")
+                .data(nodes);
+
+            text.enter().append("text")
+                .attr("class", "label")
+                .style('fill', '#000000')
+
+            // nodes.enter().append("label")
+            //     .text(function (d) { console.log(d.data.Country); return d.data.Country });
 
 
-        //     function unpack(rows, key) {
-        //         return rows.map(function (row) { return row[key]; });
-        //     }
+            // var text = g.selectAll("text")
+            //     .data(root.leaves())
+            //     .enter().append("text")
+            //     .attr("class", "label")
+            //     // .style("fill-opacity", function (d) { return d.parent === root ? 1 : 0; })
+            //     // .style("display", function (d) { return d.parent === root ? "inline" : "none"; })
+            //     .text(function (d) { return d.data.Country; });
+        };
 
-        //     var bacteriaName = unpack(rows, 'Bacteria'),
-        //         penicilinVal = unpack(rows, 'Penicilin'),
-        //         streptomycinVal = unpack(rows, 'Streptomycin'),
-        //         neomycinVal = unpack(rows, 'Neomycin'),
-        //         gramStaining = unpack(rows, 'Gram.Staining'),
+        // Call your draw function
+        draw();
 
-        //         bacteria = [], // hold bacteria name
-        //         penicilin = [], // hold penicilin value
-        //         streptomycin = [], // hold streptomycin value
-        //         neomycin = [], // hold neomycin value
-        //         stain = [], // hold positive or negative
-        //         antibioticNames = ['Penicilin', 'Streptomycin', 'Neomycin'];
+        // Listen to change events on the input elements
+        $("input").on('change', function () {
+            // Set your measure variable to the value (which is used in the draw funciton)
+            measure = $(this).val();
 
-        //     for (var i = 0; i < bacteriaName.length; i++) {
-        //         bacteria.push(bacteriaName[i]);
-        //         penicilin.push(Math.log10(penicilinVal[i]) + 3);
-        //         streptomycin.push(Math.log10(streptomycinVal[i]) + 3);
-        //         neomycin.push(Math.log10(neomycinVal[i]) + 3);
-        //         stain.push(gramStaining[i]);
-        //     }
-
-        // }
-
-        // // Grouped bar chart: each bacteria will have three bars showing how much of each antibiotic's MIC is required
-        // var grouped1 = {
-        //     x: bacteria,
-        //     y: penicilin,
-        //     name: 'Penicilin',
-        //     type: 'bar',
-
-        //     mode: 'lines+markers+text',
-        //     text: bacteria,
-        //     textposition: 'bottom',
-        // };
-
-        // var grouped2 = {
-        //     x: bacteria,
-        //     y: streptomycin,
-        //     name: 'Streptomycin',
-        //     type: 'bar',
-        // };
-
-        // var grouped3 = {
-        //     x: bacteria,
-        //     y: neomycin,
-        //     name: 'Neomycin',
-        //     type: 'bar',
-        // };
-
-        // var dataOne = [grouped1, grouped2, grouped3];
-
-        // var layoutOne = {
-        //     title: 'MIC of Antibiotics for Bacteria with scale of (log10(x)+3)',
-        //     barmode: 'group',
-        //     // annotations: [{
-        //     //     x: ["Aerobacter aerogenes", "Brucella abortus"],
-        //     //     y: 0,
-        //     //     // xref: 'x',
-        //     //     // yref: 'y',
-        //     //     text: ['positive','positive'],
-        //     //     showarrow: true,
-        //     //     font: {
-        //     //         family: 'Courier New, monospace',
-        //     //         size: 16,
-        //     //         color: '#000'
-        //     //     }
-        //     // }],
-        //     margin: {
-        //         b: 120,
-        //     }
-        // };
-
-        // // Scatter plot:
-        // var scatter1 = { // negative
-        //     x: bacteria,
-        //     y: ["negative", "negative", , , "negative", "negative", "negative", "negative",
-        //         "negative", "negative", "negative", , , , ,],
-        //     mode: 'markers',
-        //     type: 'scatter',
-        //     marker: {
-        //         size: 10,
-        //         sizeref: 0.01,
-        //         sizemode: 'area',
-        //         color: 'red',
-        //     }
-        // };
-
-        // var scatter2 = { // positive
-        //     x: bacteria,
-        //     y: [, , "positive", "positive", , , , ,
-        //         , , , "positive", "positive", "positive", "positive", "positive"],
-        //     mode: 'markers',
-        //     type: 'scatter',
-        //     marker: {
-        //         size: 10,
-        //         sizeref: 0.01,
-        //         sizemode: 'area',
-        //         color: 'blue',
-        //     }
-        // };
-
-        // var dataTwo = [scatter1, scatter2];
-        // var layoutTwo = {
-        //     //autosize: true,
-        //     height: 300,
-        //     boxmode: 'group',
-        //     showlegend: false,
-        //     margin: {
-        //         b: 120,
-        //     },
-        //     title: 'Identifying the Bacteria that are Gram-positive or Gram-negative',
-        // };
-
-        // // Bubble map chart:
-        // var bubble1 = {
-        //     x: bacteria,
-        //     y: penicilin,
-        //     mode: 'markers',
-        //     type: 'scatter',
-        //     name: 'Penicilin',
-        //     marker: {
-        //         size: penicilin,
-        //         //size: 10,
-        //         sizeref: 0.01,
-        //         sizemode: 'area',
-        //     }
-        // };
-
-        // var bubble2 = {
-        //     x: bacteria,
-        //     y: streptomycin,
-        //     mode: 'markers',
-        //     type: 'scatter',
-        //     name: 'Streptomycin',
-        //     marker: {
-        //         size: streptomycin,
-        //         //size: 10,
-        //         sizeref: 0.01,
-        //         sizemode: 'area',
-        //     }
-        // };
-
-        // var bubble3 = {
-        //     x: bacteria,
-        //     y: neomycin,
-        //     mode: 'markers',
-        //     type: 'scatter',
-        //     name: 'Neomycin',
-        //     marker: {
-        //         size: neomycin,
-        //         //size: 10,
-        //         sizeref: 0.01,
-        //         sizemode: 'area',
-        //     }
-        // };
-
-        // var dataThree = [bubble1, bubble2, bubble3];
-
-        // var layoutThree = {
-        //     title: 'Identifying the effective antibiotic with scale of (log10(x)+3)',
-        //     margin: {
-        //         b: 120,
-        //     },
-        // };
-
-        // // Call Plotly's newPlot function to draw the graphs
-        // Plotly.newPlot('firstViz', dataOne, layoutOne, { staticPlot: true });
-        // Plotly.newPlot('secondViz', dataTwo, layoutTwo, { staticPlot: true });
-        // Plotly.newPlot('thirdViz', dataThree, layoutThree, { staticPlot: true });
-        //});
-
-    }
+            // Draw your elements
+            draw();
+        });
+    });
 });
