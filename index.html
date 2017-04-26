@@ -24,6 +24,15 @@
 
     <!--To use tip-->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.7.1/d3-tip.js"></script>
+    <!--<script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>-->
+
+    <!--To us legend-->
+    <!--// d3.legend.js 
+        // (C) 2012 ziggy.jonsson.nyc@gmail.com
+        // MIT licence-->
+    <!--<script src="libraries/d3.legend.js"></script>-->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.24.0/d3-legend.js"></script>
 
     <!-- Custom files -->
     <link rel="stylesheet" href="css/main.css" />
@@ -38,13 +47,13 @@
 
     <div class="btn-group" data-toggle="buttons">
         <label class="btn btn-primary">
-				<input value="Happiness_Score" type="radio" name="options" id="option1" autocomplete="off">Park Name
+				<input value="Happiness_Score" type="radio" name="options" id="option1" autocomplete="off">Happiness Score
 			</label>
         <label class="btn btn-primary">
-				<input value="Economy_(GDP_per_Capita)" type="radio" name="options" id="option2" autocomplete="off" >Category
+				<input value="Economy_(GDP_per_Capita)" type="radio" name="options" id="option2" autocomplete="off" >Economy (GDP per Capita)
 			</label>
         <label class="btn btn-primary active">
-				<input value="Trust_(Government_Corruption)" type="radio" name="options" id="option2" autocomplete="off" checked>Order
+				<input value="Trust_(Government_Corruption)" type="radio" name="options" id="option2" autocomplete="off" checked>Trust
 			</label>
     </div>
     <div id="vis"></div>

@@ -36,13 +36,13 @@ $(function () {
         // Nest your data *by region* using d3.nest()
         var nestedData = d3.nest()
             .key(function (d) {
-                return d.Region; //Country
+                return d.Region; // do my region so that the circles are arranged by region
             })
             .entries(data);
 
         // Define a hierarchy for your data
         var root = d3.hierarchy({
-            values: nestedData
+            values: nestedData // are the countries pertaining to that region
         }, function (d) {
             return d.values;
         })
@@ -62,22 +62,28 @@ $(function () {
 
         // Get list of regions for colors
         var regions = nestedData.map(function (d) {
-            return d.key;
+            return d.values.Region;
         });
-        var happinessScore = nestedData.map(function (d) {
-            return d.values.Happiness_Score;
-        });
+        // var happinessScore = nestedData.map(function (d) {
+        //     return d.values.Happiness_Score;
+        // });
 
         // Set an ordinal scale for colors
         var colorScale = d3.scaleOrdinal().domain(regions).range(d3.schemeCategory10);
 
-        var nodeColorScale = d3.scaleOrdinal().domain(happinessScore).range(d3.schemeCategory10);
+        // var tip = d3.tip().attr('class', 'd3-tip').html(function (d) {
+        //     //console.log(d.key)
+        //     return d.key;
+        // });
+        // g.call(tip);
 
-        var tip = d3.tip().attr('class', 'd3-tip').html(function (d) {
-            //console.log(d.key)
-            return d.key;
-        });
-        g.call(tip);
+        var tip = d3.tip()
+            .attr('class', 'd3-tip')
+            .offset([-10, 0])
+            .html(function (d) {
+                return d.key;
+            })
+
 
         /* ********************************** Write a function to perform the data-join  ********************************** */
 
@@ -96,40 +102,77 @@ $(function () {
             // The data that you want to join is array of elements returned by `root.leaves()`
             var nodes = g.selectAll("circle").data(root.leaves());
 
-            //console.log(JSON.stringify(nestedData.values));
-
-            // Rather than append div elements, append circle elements to g. 
+            // Rather than append div elements, append circle elements to g "the nodes var". 
             // Position the circles, using the x, y, and r variables computed by the pack layout.
             nodes.enter().append("circle")
                 .attr("class", "node")
-
-                .merge(nodes)
                 .on('mouseover', tip.show)
                 .on('mouseout', tip.hide)
+                .merge(nodes)
                 // .attr("class", "node")
                 .transition().duration(1500)
                 .attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; })
                 .attr("r", function (d) { return d.r; })
-                .style("fill", function (d) { return nodeColorScale(d.data.Happiness_Score); }) // Country
+                .style("fill", function (d) { return colorScale(d.data.Region); })
 
-            var text = g.selectAll("text")
-                .data(nodes);
 
-            text.enter().append("text")
-                .attr("class", "label")
-                .style('fill', '#000000')
+            // Legend stuff //
+            // var ordinal = d3.scaleOrdinal()
+            //     .domain(['a', 'b', 'c',' d','e', 'f', 'g',' h', 'i', 'j'])
+            //     //.domain(regions)
+            //     // .range(["rgb(46, 73, 123)", "rgb(71, 187, 94)"]);
+            //     .range(d3.schemeCategory10)
+            var svg = d3.select("svg");
 
-            // nodes.enter().append("label")
-            //     .text(function (d) { console.log(d.data.Country); return d.data.Country });
+            svg.append("g")
+                .attr("class", "legendOrdinal")
+                .attr("transform", "translate(0,0)");
+
+            var legendOrdinal = d3.legendColor()
+                .shapeWidth(20)
+                .orient('vertical')
+                .scale(colorScale); //ordinal
+
+            svg.select(".legendOrdinal")
+                .call(legendOrdinal);
+
+
 
 
             // var text = g.selectAll("text")
-            //     .data(root.leaves())
-            //     .enter().append("text")
+            //     .data(nodes);
+
+            // text.enter().append("text")
             //     .attr("class", "label")
-            //     // .style("fill-opacity", function (d) { return d.parent === root ? 1 : 0; })
-            //     // .style("display", function (d) { return d.parent === root ? "inline" : "none"; })
-            //     .text(function (d) { return d.data.Country; });
+            //     .style('fill', '#000000')
+
+
+
+            // root
+            //     .sum(function (d) {
+            //         return +d[measure];
+            //     })
+
+            // var node = g.selectAll(".node")
+            //     .data(pack(root).descendants())
+            //     .enter().append("g")
+            //     .attr("class", function (d) { return d.children ? "node" : "leaf node"; })
+            //     .attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; });
+
+            // // node.append("title")
+            // //     //.text(function (d) { return d.data.name + "\n" + format(d.value); });
+            // //     .text(function (d) { return d.data.Region});
+
+            // node.append("circle")
+            //     .attr("r", function (d) { return d.r; });
+
+            // node.filter(function (d) { return !d.children; }).append("text")
+            //     .attr("dy", "0.3em")
+            //     .text(function (d) { return d.data.Country.substring(0, d.r / 3); });
+
+
+
+
         };
 
         // Call your draw function
