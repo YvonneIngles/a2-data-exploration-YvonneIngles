@@ -23,10 +23,12 @@
     <!--<script src="libraries/queue.js"></script>-->
 
     <!--To use tip-->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.7.1/d3-tip.js"></script>
-    <!--<script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>-->
+    <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.7.1/d3-tip.js"></script>-->
+    <!--<script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+    -->
+    <script src="libraries/d3-tip.js"></script>
 
-    <!--To us legend-->
+    <!--To use legend-->
     <!--// d3.legend.js 
         // (C) 2012 ziggy.jonsson.nyc@gmail.com
         // MIT licence-->
@@ -43,7 +45,30 @@
 
 <body class="container">
     <h1>Assignment 2: Data Exploration</h1>
-    <p>Follow the instructions in the <code>README.md</code> file to turn the treemap below into a circle-pack layout.</p>
+    <div>
+        <p>For this visualization I used a data set from <a href='https://www.kaggle.com/unsdsn/world-happiness'>Kaggle </a>based
+            on the <a href='http://worldhappiness.report/'>World Happiness Report</a>. This report explores happiness around
+            the world based on different "social foundations for individuals and nations" (worldhappiness). The overall Happiness
+            Score data is displayed, along with Economy, and Trust. Economy is based on GDP per capita and Trust is the overall
+            trust of the citizens and their government.</p>
+        <p>I decided to visualize the data with a <a href='https://bl.ocks.org/mbostock/4063530'>circle packing</a> graphic.
+            The circle packing layout allowed the data to be grouped based on regions of the world. The different regions
+            were encoded with a color that showed a group of circles were part of the same group. Space was also utilized
+            to show what the groups were. A legend helps identify what color pertains to the region of the world. Within
+            these regions the different country values, encoded in the size of the circles, could be compared with each other.
+            The larger the circle, the higher this social factor contributed to the overall Happiness Score. As one hovers
+            over the circles, the name of the specific country displays.</p>
+        <p>The Happiness Score controller, encodes the overall Happiness Score for specified countries. The larger the size
+            of the circle, the higher the country scored. Based on the region groupings, you can identify which regions overall
+            have a high Happiness Score and within those regions, which countries have a higher overall Happiness Score.
+            The Economy controller, helps identify which regions and countries have high or low Economy scores. The Trust
+            controller, like the other controllers, helps identify which regions and countries have high or low Trust scores.</p>
+        <p>When comparing the three visuals when changing the controllers, it is interesting how the overall Happiness Score
+            visual has relatively same sized circles. When the Economy and Trust controllers are toggled, there are move
+            obvious differences. For example, the Sub-Saharan Africa region in the Economy visual is easily identifiable
+            as the region with the most variation in GDP per capita. Another example, in the Trust visual, within the
+            different regions, there are several countries that have high trust and then countries on the opposite end. </p>
+    </div>
 
     <div class="btn-group" data-toggle="buttons">
         <label class="btn btn-primary">
@@ -53,7 +78,7 @@
 				<input value="Economy_(GDP_per_Capita)" type="radio" name="options" id="option2" autocomplete="off" >Economy (GDP per Capita)
 			</label>
         <label class="btn btn-primary active">
-				<input value="Trust_(Government_Corruption)" type="radio" name="options" id="option2" autocomplete="off" checked>Trust
+				<input value="Trust_(Government_Corruption)" type="radio" name="options" id="option3" autocomplete="off" checked>Trust
 			</label>
     </div>
     <div id="vis"></div>

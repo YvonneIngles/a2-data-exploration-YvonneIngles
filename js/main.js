@@ -64,26 +64,9 @@ $(function () {
         var regions = nestedData.map(function (d) {
             return d.values.Region;
         });
-        // var happinessScore = nestedData.map(function (d) {
-        //     return d.values.Happiness_Score;
-        // });
 
         // Set an ordinal scale for colors
         var colorScale = d3.scaleOrdinal().domain(regions).range(d3.schemeCategory10);
-
-        // var tip = d3.tip().attr('class', 'd3-tip').html(function (d) {
-        //     //console.log(d.key)
-        //     return d.key;
-        // });
-        // g.call(tip);
-
-        var tip = d3.tip()
-            .attr('class', 'd3-tip')
-            .offset([-10, 0])
-            .html(function (d) {
-                return d.key;
-            })
-
 
         /* ********************************** Write a function to perform the data-join  ********************************** */
 
@@ -94,6 +77,21 @@ $(function () {
                 .sum(function (d) {
                     return +d[measure];
                 })
+
+            var tip = d3.tip()
+                .attr("class", "d3-tip")
+                .offset([30, 0])
+                // .html(function (d) { return d.data.Country + " " + d.data.measure });
+                .html(function (d) { return d.data.Country});
+                // if (measure === 'Happiness_Score') {
+                //     tip.html(function (d) { return d.data.Country + " " + d.data.Happiness_Score });
+                // } else if (measure === 'Economy') {
+                //     tip.html(function (d) { return d.data.Country + " " + d.data.Economy });
+                // } else {
+                //     tip.html(function (d) { return d.data.Country + " " + d.data.Trust });
+                // }
+                
+            g.call(tip);
 
             // (Re)build your treemap data structure by passing your `root` to `pack` function
             pack(root);
@@ -109,19 +107,12 @@ $(function () {
                 .on('mouseover', tip.show)
                 .on('mouseout', tip.hide)
                 .merge(nodes)
-                // .attr("class", "node")
                 .transition().duration(1500)
                 .attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; })
                 .attr("r", function (d) { return d.r; })
                 .style("fill", function (d) { return colorScale(d.data.Region); })
 
-
-            // Legend stuff //
-            // var ordinal = d3.scaleOrdinal()
-            //     .domain(['a', 'b', 'c',' d','e', 'f', 'g',' h', 'i', 'j'])
-            //     //.domain(regions)
-            //     // .range(["rgb(46, 73, 123)", "rgb(71, 187, 94)"]);
-            //     .range(d3.schemeCategory10)
+            // Legend stuff
             var svg = d3.select("svg");
 
             svg.append("g")
@@ -135,44 +126,6 @@ $(function () {
 
             svg.select(".legendOrdinal")
                 .call(legendOrdinal);
-
-
-
-
-            // var text = g.selectAll("text")
-            //     .data(nodes);
-
-            // text.enter().append("text")
-            //     .attr("class", "label")
-            //     .style('fill', '#000000')
-
-
-
-            // root
-            //     .sum(function (d) {
-            //         return +d[measure];
-            //     })
-
-            // var node = g.selectAll(".node")
-            //     .data(pack(root).descendants())
-            //     .enter().append("g")
-            //     .attr("class", function (d) { return d.children ? "node" : "leaf node"; })
-            //     .attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; });
-
-            // // node.append("title")
-            // //     //.text(function (d) { return d.data.name + "\n" + format(d.value); });
-            // //     .text(function (d) { return d.data.Region});
-
-            // node.append("circle")
-            //     .attr("r", function (d) { return d.r; });
-
-            // node.filter(function (d) { return !d.children; }).append("text")
-            //     .attr("dy", "0.3em")
-            //     .text(function (d) { return d.data.Country.substring(0, d.r / 3); });
-
-
-
-
         };
 
         // Call your draw function
@@ -182,6 +135,7 @@ $(function () {
         $("input").on('change', function () {
             // Set your measure variable to the value (which is used in the draw funciton)
             measure = $(this).val();
+            //localMeasure = $(this).val();
 
             // Draw your elements
             draw();
