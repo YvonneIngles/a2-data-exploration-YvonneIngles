@@ -83,6 +83,8 @@ $(function () {
                 .offset([30, 0])
                 // .html(function (d) { return d.data.Country + " " + d.data.measure });
                 .html(function (d) { return d.data.Country});
+
+                //* Couldn't figure out how to display the actual scores to change when the buttons are switched */
                 // if (measure === 'Happiness_Score') {
                 //     tip.html(function (d) { return d.data.Country + " " + d.data.Happiness_Score });
                 // } else if (measure === 'Economy') {
@@ -135,7 +137,6 @@ $(function () {
         $("input").on('change', function () {
             // Set your measure variable to the value (which is used in the draw funciton)
             measure = $(this).val();
-            //localMeasure = $(this).val();
 
             // Draw your elements
             draw();
